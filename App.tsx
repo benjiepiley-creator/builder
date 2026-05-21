@@ -1,5 +1,5 @@
 import "react-native-gesture-handler";
-import "./src/app/global.css";
+import "./src/styles/global.css";
 
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
