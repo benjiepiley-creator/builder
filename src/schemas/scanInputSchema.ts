@@ -11,7 +11,7 @@ export const scanInputSchema = z
     category: z.enum(CATEGORIES, {
       error: "Choose a category"
     }),
-    itemTitle: z.string().trim().min(2, "Add a short item title"),
+    itemTitle: z.string().trim().optional().default(""),
     askingPrice: optionalMoney,
     location: z.string().trim().optional().default(""),
     listingDescription: z.string().trim().optional().default(""),

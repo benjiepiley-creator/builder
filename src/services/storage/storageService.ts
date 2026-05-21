@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { savedScanSchema } from "@/schemas/savedScanSchema";
 import { isSupabaseConfigured, supabase } from "@/services/supabase/client";
 import type { SavedScan } from "@/types/scan";
 import { AppError } from "@/utils/network";
@@ -14,16 +15,46 @@ export type ScanStorage = {
   clearScans: () => Promise<void>;
 };
 
-const readLocalScans = async () => {
+export const sanitizeScanForPersistence = (scan: SavedScan): SavedScan => ({
+  ...scan,
+  images: scan.images.map((image) => ({
+    id: image.id,
+    uri: image.uri,
+    width: image.width,
+    height: image.height,
+    fileSize: image.fileSize
+  }))
+});
+
+const readLocalScans = async (): Promise<SavedScan[]> => {
   const raw = await AsyncStorage.getItem(LOCAL_SCANS_KEY);
   if (!raw) return [];
-  return JSON.parse(raw) as SavedScan[];
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+
+    const scans = parsed
+      .map((item) => savedScanSchema.safeParse(item))
+      .filter((result) => result.success)
+      .map((result) => sanitizeScanForPersistence(result.data));
+
+    if (scans.length !== parsed.length) {
+      await AsyncStorage.setItem(LOCAL_SCANS_KEY, JSON.stringify(scans));
+    }
+
+    return scans;
+  } catch {
+    await AsyncStorage.removeItem(LOCAL_SCANS_KEY);
+    return [];
+  }
 };
 
 export const localScanStorage: ScanStorage = {
   async saveScan(scan) {
     const scans = await readLocalScans();
-    const next = [scan, ...scans.filter((item) => item.id !== scan.id)].slice(0, 75);
+    const persistedScan = sanitizeScanForPersistence(scan);
+    const next = [persistedScan, ...scans.filter((item) => item.id !== scan.id)].slice(0, 75);
     await AsyncStorage.setItem(LOCAL_SCANS_KEY, JSON.stringify(next));
   },
   async getScans() {

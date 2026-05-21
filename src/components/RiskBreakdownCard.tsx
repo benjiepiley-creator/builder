@@ -19,10 +19,10 @@ const labels: Record<keyof AiReport["riskBreakdown"], string> = {
 export const RiskBreakdownCard = ({ breakdown }: Props) => (
   <View className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5">
     <Text className="mb-4 text-xl font-bold text-white">Risk Breakdown</Text>
-    {(Object.keys(labels) as (keyof AiReport["riskBreakdown"])[]).map((key) => {
+    {(Object.keys(labels) as (keyof AiReport["riskBreakdown"])[]).map((key, index, items) => {
       const value = breakdown[key];
       return (
-        <View key={key} className="mb-4 last:mb-0">
+        <View key={key} className={index === items.length - 1 ? "" : "mb-4"}>
           <View className="mb-2 flex-row items-center justify-between">
             <Text className="font-semibold text-slate-200">{labels[key]}</Text>
             <Text className="font-bold text-white">{value}/100</Text>

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 import { analyzePurchase } from "@/services/ai/aiService";
-import { scanStorage } from "@/services/storage/storageService";
+import { sanitizeScanForPersistence, scanStorage } from "@/services/storage/storageService";
 import { useSubscriptionStore } from "@/services/subscription/subscriptionService";
 import type { SavedScan, ScanInput } from "@/types/scan";
 import { createId } from "@/utils/id";
@@ -54,13 +54,14 @@ export const useScanStore = create<ScanState>((set, get) => ({
         thumbnailUri: input.images[0]?.uri
       };
       await scanStorage.saveScan(savedScan);
+      const persistedScan = sanitizeScanForPersistence(savedScan);
       subscription.registerScan();
       set((state) => ({
-        currentScan: savedScan,
-        scans: [savedScan, ...state.scans.filter((scan) => scan.id !== savedScan.id)],
+        currentScan: persistedScan,
+        scans: [persistedScan, ...state.scans.filter((scan) => scan.id !== savedScan.id)],
         isAnalyzing: false
       }));
-      return savedScan;
+      return persistedScan;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Risk analysis failed.";
       set({ error: message, isAnalyzing: false });
@@ -68,9 +69,11 @@ export const useScanStore = create<ScanState>((set, get) => ({
     }
   },
   async saveReport(scan) {
-    await scanStorage.saveScan(scan);
+    const persistedScan = sanitizeScanForPersistence(scan);
+    await scanStorage.saveScan(persistedScan);
     set((state) => ({
-      scans: [scan, ...state.scans.filter((item) => item.id !== scan.id)]
+      currentScan: state.currentScan?.id === scan.id ? persistedScan : state.currentScan,
+      scans: [persistedScan, ...state.scans.filter((item) => item.id !== scan.id)]
     }));
   },
   async deleteScan(id) {

@@ -5,7 +5,8 @@ import type { ScanInput } from "@/types/scan";
 import { AppError, retry, wait } from "@/utils/network";
 
 const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-const USE_MOCK_AI = process.env.EXPO_PUBLIC_USE_MOCK_AI !== "false" || !OPENAI_API_KEY;
+const MOCK_AI_SETTING = process.env.EXPO_PUBLIC_USE_MOCK_AI;
+const USE_MOCK_AI = MOCK_AI_SETTING ? MOCK_AI_SETTING === "true" : !OPENAI_API_KEY;
 const OPENAI_MODEL = "gpt-4o-mini";
 
 const buildUserPrompt = (input: ScanInput) => `

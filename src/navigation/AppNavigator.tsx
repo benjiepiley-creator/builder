@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NavigationContainer, DarkTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { ActivityIndicator, Text, View } from "react-native";
 
 import type { RootStackParamList } from "@/navigation/types";
 import { AnalysisScreen } from "@/screens/AnalysisScreen";
@@ -35,7 +36,12 @@ export const AppNavigator = () => {
   }, []);
 
   if (!initialRoute) {
-    return null;
+    return (
+      <View className="flex-1 items-center justify-center bg-[#060912] px-6">
+        <ActivityIndicator color="#38BDF8" size="large" />
+        <Text className="mt-4 text-lg font-bold text-white">Loading RiskRadar...</Text>
+      </View>
+    );
   }
 
   return (
@@ -48,10 +54,10 @@ export const AppNavigator = () => {
           animation: "slide_from_right"
         }}
       >
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
         <Stack.Screen name="NewScan" component={NewScanScreen} />
-        <Stack.Screen name="Analysis" component={AnalysisScreen} />
+        <Stack.Screen name="Analysis" component={AnalysisScreen} options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="RiskReport" component={RiskReportScreen} />
         <Stack.Screen name="PastScans" component={PastScansScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />

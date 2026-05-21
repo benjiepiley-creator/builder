@@ -13,7 +13,7 @@ export const UpgradeModal = () => {
         <LinearGradient colors={["#111827", "#0F172A"]} className="rounded-[32px] border border-slate-700 p-6">
           <Text className="text-3xl font-black text-white">Upgrade RiskRadar</Text>
           <Text className="mt-3 leading-6 text-slate-300">
-            Free scans are limited to 3 per month. Payments are mocked for now, with a RevenueCat-ready structure.
+            Free scans are limited to 3 per month. This is a development subscription placeholder; plan selection is saved locally until RevenueCat is connected.
           </Text>
 
           <View className="mt-5 gap-3">

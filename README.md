@@ -63,7 +63,6 @@ npm run lint
 
 ```text
 src/
-  app/
   components/
   constants/
   hooks/
@@ -77,6 +76,7 @@ src/
     supabase/
   types/
   utils/
+  styles/
 ```
 
 Screens use reusable components and call store/service abstractions rather than backend APIs directly. The AI service validates all responses with Zod. Storage defaults to local AsyncStorage and includes Supabase-ready functions for future authenticated sync.

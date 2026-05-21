@@ -4,7 +4,10 @@ import { Controller, type Resolver, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
+import { BottomNav } from "@/components/BottomNav";
 import { CategoryPicker } from "@/components/CategoryPicker";
+import { GlassCard } from "@/components/GlassCard";
+import { HeaderBar } from "@/components/HeaderBar";
 import { ImageUploader } from "@/components/ImageUploader";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { ScreenContainer } from "@/components/ScreenContainer";
@@ -27,7 +30,7 @@ type ScanFormValues = {
 };
 
 const inputClass =
-  "rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-4 text-base text-white";
+  "rounded-2xl border border-white/10 bg-black/35 px-4 py-4 text-base text-white";
 
 export const NewScanScreen = ({ navigation }: Props) => {
   const lastSubmitAt = useRef(0);
@@ -79,14 +82,32 @@ export const NewScanScreen = ({ navigation }: Props) => {
 
   return (
     <ScreenContainer>
-      <View className="pt-4">
-        <Text className="text-sm font-bold uppercase tracking-[4px] text-cyan-300">New Scan</Text>
-        <Text className="mt-2 text-4xl font-black text-white">Analyze a purchase</Text>
-        <Text className="mt-3 leading-6 text-slate-400">
-          Add the details you have. RiskRadar requires at least listing text, seller messages, or an uploaded image.
-        </Text>
+      <View>
+        <HeaderBar
+          showBack
+          onBack={() => navigation.goBack()}
+          eyebrow="New Scan"
+          title="Analyze purchase"
+          rightLabel="History"
+          onRightPress={() => navigation.navigate("PastScans")}
+        />
 
-        <View className="mt-8 gap-6">
+        <GlassCard glow="cyan">
+          <Text className="text-lg font-black text-white">Build a smarter risk profile</Text>
+          <Text className="mt-2 leading-6 text-slate-300">
+            Add text, messages, and photos. RiskRadar needs at least one content source before analysis.
+          </Text>
+          <View className="mt-5 flex-row gap-3">
+            {["Details", "Photos", "AI scan"].map((step) => (
+              <View key={step} className="flex-1 rounded-2xl border border-white/10 bg-white/5 p-3">
+                <Text className="text-center text-xs font-bold uppercase text-cyan-100">{step}</Text>
+              </View>
+            ))}
+          </View>
+        </GlassCard>
+
+        <GlassCard className="mt-5" glow="violet">
+          <View className="gap-6">
           <CategoryPicker
             value={category}
             onChange={(value) => setValue("category", value, { shouldValidate: true })}
@@ -208,8 +229,11 @@ export const NewScanScreen = ({ navigation }: Props) => {
             )}
           />
 
-          <PrimaryButton title="Analyze Risk" loading={isSubmitting} onPress={handleSubmit(onSubmit)} />
-        </View>
+            <PrimaryButton title="Analyze Risk" loading={isSubmitting} onPress={handleSubmit(onSubmit)} />
+          </View>
+        </GlassCard>
+
+        <BottomNav active="scan" />
       </View>
     </ScreenContainer>
   );

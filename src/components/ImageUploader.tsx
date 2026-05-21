@@ -19,7 +19,7 @@ export const ImageUploader = ({ images, onChange }: Props) => {
 
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ["images"],
         allowsMultipleSelection: true,
         quality: 0.85,
         base64: false,

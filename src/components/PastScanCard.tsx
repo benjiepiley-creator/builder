@@ -1,4 +1,4 @@
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Pressable, Text, View, type GestureResponderEvent } from "react-native";
 
 import type { SavedScan } from "@/types/scan";
 import { formatCurrency, formatDate } from "@/utils/format";
@@ -11,12 +11,12 @@ type Props = {
 };
 
 export const PastScanCard = ({ scan, onPress, onDelete }: Props) => (
-  <Pressable onPress={onPress} className="rounded-3xl border border-slate-800 bg-slate-900/80 p-4">
+  <Pressable onPress={onPress} className="rounded-[28px] border border-white/10 bg-black/45 p-4">
     <View className="flex-row gap-4">
       {scan.thumbnailUri ? (
         <Image source={{ uri: scan.thumbnailUri }} className="h-20 w-20 rounded-2xl bg-slate-800" />
       ) : (
-        <View className="h-20 w-20 items-center justify-center rounded-2xl bg-slate-800">
+        <View className="h-20 w-20 items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-300/10">
           <Text className="text-2xl font-black text-cyan-200">{scan.report.overallRiskScore}</Text>
         </View>
       )}
@@ -25,7 +25,13 @@ export const PastScanCard = ({ scan, onPress, onDelete }: Props) => (
           <Text numberOfLines={1} className="flex-1 text-lg font-bold text-white">
             {scan.itemTitle || "Untitled scan"}
           </Text>
-          <Pressable onPress={onDelete} className="rounded-full bg-red-500/10 px-3 py-1">
+          <Pressable
+            onPress={(event: GestureResponderEvent) => {
+              event.stopPropagation();
+              onDelete();
+            }}
+            className="rounded-full border border-red-300/20 bg-red-500/10 px-3 py-1"
+          >
             <Text className="text-xs font-bold text-red-200">Delete</Text>
           </Pressable>
         </View>
