@@ -1,6 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
 
 export type UserPlan = "free" | "pro" | "premium";
 
@@ -40,7 +39,13 @@ type SubscriptionState = {
   setPlan: (plan: UserPlan) => void;
 };
 
+type PersistedSubscriptionState = Pick<SubscriptionState, "userPlan" | "scansThisMonth" | "monthKey">;
+
+const SUBSCRIPTION_KEY = "riskradar.subscription.v1";
 const getMonthKey = () => new Date().toISOString().slice(0, 7);
+
+const isUserPlan = (value: unknown): value is UserPlan =>
+  value === "free" || value === "pro" || value === "premium";
 
 const resetIfNewMonth = (state: SubscriptionState) => {
   const currentMonth = getMonthKey();
@@ -48,41 +53,71 @@ const resetIfNewMonth = (state: SubscriptionState) => {
   return { ...state, scansThisMonth: 0, monthKey: currentMonth };
 };
 
-export const useSubscriptionStore = create<SubscriptionState>()(
-  persist(
-    (set, get) => ({
-      userPlan: "free",
-      scansThisMonth: 0,
-      monthKey: getMonthKey(),
-      upgradeVisible: false,
-      canRunScan: () => {
-        const current = resetIfNewMonth(get());
-        if (current.monthKey !== get().monthKey) {
-          set({ scansThisMonth: current.scansThisMonth, monthKey: current.monthKey });
-        }
-        const limit = PLAN_CONFIG[current.userPlan].monthlyScanLimit;
-        return limit === null || current.scansThisMonth < limit;
-      },
-      registerScan: () =>
-        set((state) => {
-          const current = resetIfNewMonth(state);
-          return {
-            scansThisMonth: current.scansThisMonth + 1,
-            monthKey: current.monthKey
-          };
-        }),
-      showUpgrade: () => set({ upgradeVisible: true }),
-      hideUpgrade: () => set({ upgradeVisible: false }),
-      setPlan: (plan) => set({ userPlan: plan, upgradeVisible: false })
-    }),
-    {
-      name: "riskradar.subscription.v1",
-      storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({
-        userPlan: state.userPlan,
-        scansThisMonth: state.scansThisMonth,
-        monthKey: state.monthKey
-      })
+const persistSubscription = async (state: PersistedSubscriptionState) => {
+  try {
+    await AsyncStorage.setItem(SUBSCRIPTION_KEY, JSON.stringify(state));
+  } catch {
+    // Subscription state is a convenience cache; scan gating still works in memory.
+  }
+};
+
+export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
+  userPlan: "free",
+  scansThisMonth: 0,
+  monthKey: getMonthKey(),
+  upgradeVisible: false,
+  canRunScan: () => {
+    const current = resetIfNewMonth(get());
+    if (current.monthKey !== get().monthKey) {
+      const next = { scansThisMonth: current.scansThisMonth, monthKey: current.monthKey };
+      set(next);
+      void persistSubscription({
+        userPlan: current.userPlan,
+        scansThisMonth: next.scansThisMonth,
+        monthKey: next.monthKey
+      });
     }
-  )
-);
+    const limit = PLAN_CONFIG[current.userPlan].monthlyScanLimit;
+    return limit === null || current.scansThisMonth < limit;
+  },
+  registerScan: () =>
+    set((state) => {
+      const current = resetIfNewMonth(state);
+      const next = {
+        scansThisMonth: current.scansThisMonth + 1,
+        monthKey: current.monthKey
+      };
+      void persistSubscription({
+        userPlan: current.userPlan,
+        scansThisMonth: next.scansThisMonth,
+        monthKey: next.monthKey
+      });
+      return next;
+    }),
+  showUpgrade: () => set({ upgradeVisible: true }),
+  hideUpgrade: () => set({ upgradeVisible: false }),
+  setPlan: (plan) => {
+    const state = get();
+    set({ userPlan: plan, upgradeVisible: false });
+    void persistSubscription({
+      userPlan: plan,
+      scansThisMonth: state.scansThisMonth,
+      monthKey: state.monthKey
+    });
+  }
+}));
+
+AsyncStorage.getItem(SUBSCRIPTION_KEY)
+  .then((raw) => {
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as Partial<PersistedSubscriptionState>;
+    if (!isUserPlan(parsed.userPlan)) return;
+
+    const monthKey = parsed.monthKey === getMonthKey() ? parsed.monthKey : getMonthKey();
+    useSubscriptionStore.setState({
+      userPlan: parsed.userPlan,
+      scansThisMonth: parsed.monthKey === monthKey && typeof parsed.scansThisMonth === "number" ? parsed.scansThisMonth : 0,
+      monthKey
+    });
+  })
+  .catch(() => undefined);

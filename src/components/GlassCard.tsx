@@ -14,9 +14,8 @@ export const GlassCard = ({ children, className = "", glow = "none" }: Props) =>
     <View className={`overflow-hidden rounded-[30px] border border-white/10 bg-slate-950/70 ${className}`}>
       {glow !== "none" ? (
         <View
-          pointerEvents="none"
           className="absolute -right-10 -top-10 h-28 w-28 rounded-full"
-          style={{ backgroundColor: glowColor }}
+          style={{ backgroundColor: glowColor, pointerEvents: "none" }}
         />
       ) : null}
       <LinearGradient
